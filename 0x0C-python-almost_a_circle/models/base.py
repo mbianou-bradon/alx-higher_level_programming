@@ -1,187 +1,180 @@
 #!/usr/bin/python3
-import unittest
-from models.base import Base
-from models.rectangle import Rectangle
-from models.square import Square
-from io import StringIO
-import sys
+'''
+    Creating the base class of all other classes for this project.
+'''
 import json
-import pep8
+import csv
 
 
-class TestSquare(unittest.TestCase):
-    """class TestSquare"""
-    def test_id(self):
-        """check instance was created"""
-        Base._Base__nb_objects = 0
-        s1 = Square(5)
-        self.assertIsNotNone(id(s1))
+class Base:
+    '''
+        This class will manage the id attribute for all the classes.
+        Arguments:
+            @id: The id for a specific instance.
+    '''
 
-    def test_init(self):
-        """check that instance was created from correct class"""
-        Base._Base__nb_objects = 0
-        s2 = Square(5)
-        self.assertIsInstance(s2, Square)
-        self.assertTrue(issubclass(type(s2), Rectangle))
+    __nb_objects = 0
 
-    def test_numObj(self):
-        """check number of instances created"""
-        Base._Base__nb_objects = 0
-        s3 = Square(2, 2)
-        s4 = Square(5, 5)
-        self.assertEqual(s4.id, 2)
+    def __init__(self, id=None):
+        if id is not None:
+            self.id = id
+        else:
+            Base.__nb_objects += 1
+            self.id = Base.__nb_objects
 
-    def test_getterAndSetter(self):
-        """check getter and setter"""
-        Base._Base__nb_objects = 0
-        s5 = Square(5)
-        self.assertEqual(s5.width, 5)
-        self.assertEqual(s5.height, 5)
-        s5 = Square(2, 2)
-        self.assertEqual(s5.width, 2)
-        self.assertEqual(s5.height, 2)
-        self.assertEqual(s5.x, 2)
-        s5 = Square(3, 1, 3)
-        self.assertEqual(s5.width, 3)
-        self.assertEqual(s5.height, 3)
-        self.assertEqual(s5.x, 1)
-        self.assertEqual(s5.y, 3)
+    @staticmethod
+    def to_json_string(list_dictionaries):
+        '''
+            Converting a dict into a json string
+        '''
+        if list_dictionaries is None:
+            return '[]'
+        return json.dumps(list_dictionaries)
 
-    def test_area(self):
-        """check area"""
-        Base._Base__nb_objects = 0
-        s6 = Square(5)
-        self.assertEqual(s6.area(), s6.width * s6.height)
+    @staticmethod
+    def from_json_string(json_string):
+        '''
+            Returns a dict from a string
+        '''
+        if json_string is None or len(json_string) == 0:
+            return []
+        return json.loads(json_string)
 
-    def test_errors(self):
-        """check errors"""
-        Base._Base__nb_objects = 0
-        s = Square(5)
-        with self.assertRaisesRegex(TypeError, "width must be an integer"):
-            s.size = "10"
-        with self.assertRaisesRegex(ValueError, "width must be > 0"):
-            s.size = -10
-        with self.assertRaisesRegex(TypeError, "x must be an integer"):
-            s.x = "1"
-        with self.assertRaisesRegex(ValueError, "x must be >= 0"):
-            s.x = -10
-        with self.assertRaisesRegex(TypeError, "y must be an integer"):
-            s.y = "10"
-        with self.assertRaisesRegex(ValueError, "y must be >= 0"):
-            Square(10, 3, -1)
+    @classmethod
+    def save_to_file(cls, list_objs):
+        '''
+            Writes the string representation of an object of a class
+            into a file
+        '''
+        file_name = cls.__name__ + ".json"
 
-    def test_display(self):
-        """check display"""
-        Base._Base__nb_objects = 0
-        s7 = Square(5)
-        old_stdout = sys.stdout
-        result = StringIO()
-        sys.stdout = result
-        s7.display()
-        sys.stdout = old_stdout
-        result_string = result.getvalue()
-        self.assertEqual(result_string, "#####\n#####\n#####\n#####\n#####\n")
-        s8 = Square(2, 2)
-        old_stdout = sys.stdout
-        result = StringIO()
-        sys.stdout = result
-        s8.display()
-        sys.stdout = old_stdout
-        result_string = result.getvalue()
-        self.assertEqual(result_string, "  ##\n  ##\n")
-        s9 = Square(3, 1, 3)
-        old_stdout = sys.stdout
-        result = StringIO()
-        sys.stdout = result
-        s9.display()
-        sys.stdout = old_stdout
-        result_string = result.getvalue()
-        self.assertEqual(result_string, "\n\n\n ###\n ###\n ###\n")
+        content = []
+        if list_objs is not None:
+            for item in list_objs:
+                item = item.to_dictionary()
+                json_dict = json.loads(cls.to_json_string(item))
+                content.append(json_dict)
 
-    def test_str(self):
-        """check str"""
-        Base._Base__nb_objects = 0
-        s8 = Square(5)
-        s9 = Square(2, 2)
-        s10 = Square(3, 1, 3)
-        string1 = s8.__str__()
-        string2 = s9.__str__()
-        string3 = s10.__str__()
-        self.assertEqual(string1, "[Square] ({:d}) 0/0 - 5".format(s8.id))
-        self.assertEqual(string2, "[Square] ({:d}) 2/0 - 2".format(s9.id))
-        self.assertEqual(string3, "[Square] ({:d}) 1/3 - 3".format(s10.id))
+        with open(file_name, mode="w") as fd:
+            json.dump(content, fd)
 
-    def test_display_xy(self):
-        """check display with xy attributes"""
-        Base._Base__nb_objects = 0
-        s1 = Square(2, 3, 2)
-        old_stdout = sys.stdout
-        result = StringIO()
-        sys.stdout = result
-        s1.display()
-        sys.stdout = old_stdout
-        result_string = result.getvalue()
-        self.assertEqual(result_string, "\n\n   ##\n   ##\n")
-        s2 = Square(3, 2, 1)
-        old_stdout = sys.stdout
-        result = StringIO()
-        sys.stdout = result
-        s2.display()
-        sys.stdout = old_stdout
-        result_string = result.getvalue()
-        self.assertEqual(result_string, "\n  ###\n  ###\n  ###\n")
+    @classmethod
+    def create(cls, **dictionary):
+        '''
+            Returns an instance with all the attributes already set
+        '''
+        from models.rectangle import Rectangle
+        from models.square import Square
 
-    def test_update(self):
-        """check args, kwargs"""
-        Base._Base__nb_objects = 0
-        s1 = Square(5)
-        s1.update(10)
-        string = s1.__str__()
-        self.assertEqual(string, "[Square] (10) 0/0 - 5")
-        s1.update(1, 2)
-        string = s1.__str__()
-        self.assertEqual(string, "[Square] (1) 0/0 - 2")
-        s1.update(1, 2, 3)
-        string = s1.__str__()
-        self.assertEqual(string, "[Square] (1) 3/0 - 2")
-        s1.update(1, 2, 3, 4)
-        string = s1.__str__()
-        self.assertEqual(string, "[Square] (1) 3/4 - 2")
-        s1.update(x=12)
-        string = s1.__str__()
-        self.assertEqual(string, "[Square] (1) 12/4 - 2")
-        s1.update(size=7, y=1)
-        string = s1.__str__()
-        self.assertEqual(string, "[Square] (1) 12/1 - 7")
-        s1.update(size=7, id=89, y=1)
-        string = s1.__str__()
-        self.assertEqual(string, "[Square] (89) 12/1 - 7")
+        if cls.__name__ == "Rectangle":
+            r2 = Rectangle(3, 8)
+        elif cls.__name__ == "Square":
+            r2 = Square(5)
+        r2.update(**dictionary)
+        return (r2)
 
-    def test_dictionary(self):
-        """check dictionary conversion"""
-        Base._Base__nb_objects = 0
-        s1 = Square(10, 2, 1, 1)
-        a_dict = {'id': 1, 'x': 2, 'size': 10, 'y': 1}
-        s1_dictionary = s1.to_dictionary()
-        self.assertTrue(s1_dictionary == a_dict)
+    @classmethod
+    def load_from_file(cls):
+        '''
+            loading dict representing the parameters for
+            and instance and from that creating instances
+        '''
+        file_name = cls.__name__ + ".json"
 
-    def test_empty(self):
-        """check empty arguments"""
-        Base._Base__nb_objects = 0
-        s1 = Square(5)
-        with self.assertRaisesRegex(TypeError, "width must be an integer"):
-            s1.size = None
-        with self.assertRaisesRegex(TypeError, "width must be an integer"):
-            s1.size = ""
+        try:
+            with open(file_name, encoding="UTF8") as fd:
+                content = cls.from_json_string(fd.read())
+        except:
+            return []
 
-    def test_pep8_model(self):
-        """tests for pep8"""
-        p8 = pep8.StyleGuide(quiet=True)
-        p = p8.check_files(['models/base.py'])
-        self.assertEqual(p.total_errors, 0, "fix pep8")
+        instances = []
 
-    def test_pep8_test(self):
-        """tests for pep8"""
-        p8 = pep8.StyleGuide(quiet=True)
-        p = p8.check_files(['tests/test_models/test_base.py'])
-        self.assertEqual(p.total_errors, 0, "fix pep8")
+        for instance in content:
+            tmp = cls.create(**instance)
+            instances.append(tmp)
+
+        return instances
+
+    @staticmethod
+    def draw(list_rectangles, list_squares):
+        '''
+            Opens a window and draws all the squares and rectangles
+        '''
+        import turtle
+
+        turtle.penup()
+        turtle.pensize(10)
+        turtle.bgcolor("black")
+        turtle.color("teal")
+        turtle.hideturtle()
+        turtle.goto(-300, 300)
+        turtle.speed(0)
+
+        for instance in list_rectangles:
+            turtle.pendown()
+            for i in range(2):
+                turtle.forward(instance.width)
+                turtle.right(90)
+                turtle.forward(instance.height)
+                turtle.right(90)
+            turtle.penup()
+            if instance.width < 100:
+                move_by = 200
+            else:
+                move_by = instance.width + 30
+            x_cordinate = round(turtle.xcor(), 5)
+            turtle.goto(x_cordinate + move_by, 300)
+
+        turtle.goto(-300, 100)
+        for instance in list_squares:
+            turtle.pendown()
+            for i in range(2):
+                turtle.forward(instance.width)
+                turtle.right(90)
+                turtle.forward(instance.height)
+                turtle.right(90)
+            turtle.penup()
+            if instance.width < 100:
+                move_by = 100
+            else:
+                move_by = instance.width + 30
+            x_cordinate = round(turtle.xcor(), 5)
+            turtle.goto(x_cordinate + move_by, 100)
+
+        turtle.exitonclick()
+
+    @classmethod
+    def save_to_file_csv(cls, list_objs):
+        '''
+            this is my method
+        '''
+        file_name = cls.__name__ + ".csv"
+
+        with open(file_name, mode="w", newline='', encoding="UTF8") as fd:
+            write_this = csv.writer(fd, delimiter=" ")
+
+            if cls.__name__ == "Rectangle":
+                for item in list_objs:
+                    string = ""
+                    item = item.to_dictionary()
+                    string += (str(item["id"]) + "," +
+                               str(item["width"]) + "," +
+                               str(item["height"]) + "," +
+                               str(item["x"]) + "," + str(item["y"]))
+                    write_this.writerow(string)
+
+            if cls.__name__ == "Square":
+                for item in list_objs:
+                    string = ""
+                    item = item.to_dictionary()
+                    string += (str(item["id"]) + "," +
+                               str(item["size"]) + "," +
+                               str(item["x"]) + "," + str(item["y"]))
+                    write_this.writerow(string)
+
+    @classmethod
+    def load_from_file_csv(cls):
+        '''
+            this is my method
+        '''
+        return ([])
