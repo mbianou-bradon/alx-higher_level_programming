@@ -1,9 +1,7 @@
 #!/usr/bin/node
 
-const languages = ['C is fun', 'Python is cool', 'Javascript is amazing'];
-let index = 0;
+const languages = ['C is fun', 'Python is cool', 'JavaScript is amazing'];
 
-while(index < languages.length) {
+for (let index = 0; index < languages.length; index++) {
   console.log(languages[index]);
-  index++;
-};
+}
